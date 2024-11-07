@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 
+# Clases de datos y nodos
 class Book:
     def __init__(self, title, author, year):
         self.title = title
@@ -56,105 +57,81 @@ class SimpleList:
             current = current.next
         return books
 
-class DoublyNode:
-    def __init__(self, book):
-        self.book = book
-        self.next = None
-        self.prev = None
+# Interfaz gráfica con tkinter
+class BookManagerApp:
+    def __init__(self, root):
+        self.list = SimpleList()
 
-class DoublyList:
-    def __init__(self):
-        self.head = None
+        # Configuración de la ventana
+        root.title("Gestión de Libros")
+        root.geometry("400x300")
 
-    def add_book(self, book):
-        new_node = DoublyNode(book)
-        if not self.head:
-            self.head = new_node
+        # Entradas de datos
+        self.title_entry = tk.Entry(root)
+        self.title_entry.grid(row=0, column=1)
+        tk.Label(root, text="Título:").grid(row=0, column=0)
+
+        self.author_entry = tk.Entry(root)
+        self.author_entry.grid(row=1, column=1)
+        tk.Label(root, text="Autor:").grid(row=1, column=0)
+
+        self.year_entry = tk.Entry(root)
+        self.year_entry.grid(row=2, column=1)
+        tk.Label(root, text="Año:").grid(row=2, column=0)
+
+        # Botones de acción
+        tk.Button(root, text="Agregar Libro", command=self.add_book).grid(row=3, column=0, columnspan=2)
+        tk.Button(root, text="Buscar Libro", command=self.search_book).grid(row=4, column=0, columnspan=2)
+        tk.Button(root, text="Eliminar Libro", command=self.delete_book).grid(row=5, column=0, columnspan=2)
+        tk.Button(root, text="Mostrar Libros", command=self.show_books).grid(row=6, column=0, columnspan=2)
+
+    def add_book(self):
+        title = self.title_entry.get()
+        author = self.author_entry.get()
+        year = self.year_entry.get()
+
+        if title and author and year:
+            try:
+                year = int(year)
+                book = Book(title, author, year)
+                self.list.add_book(book)
+                messagebox.showinfo("Éxito", f"Libro '{title}' agregado.")
+            except ValueError:
+                messagebox.showerror("Error", "El año debe ser un número.")
         else:
-            current = self.head
-            while current:
-                if (book.year < current.book.year or
-                    (book.year == current.book.year and book.author < current.book.author) or
-                    (book.year == current.book.year and book.author == current.book.author and book.title < current.book.title)):
-                    if current == self.head:
-                        new_node.next = self.head
-                        self.head.prev = new_node
-                        self.head = new_node
-                        new_node.prev = None
-                    else:
-                        new_node.prev = current.prev
-                        new_node.next = current
-                        current.prev.next = new_node
-                        current.prev = new_node
-                    return
-                if not current.next:  # Si llegamos al final de la lista
-                    break
-                current = current.next
+            messagebox.showwarning("Advertencia", "Por favor, complete todos los campos.")
 
-            # Si el libro es el más grande, lo añadimos al final
-            current.next = new_node
-            new_node.prev = current
-            new_node.next = None
+    def search_book(self):
+        title = self.title_entry.get()
+        if title:
+            book = self.list.search_book(title)
+            if book:
+                messagebox.showinfo("Libro Encontrado", f"Título: {book.title}\nAutor: {book.author}\nAño: {book.year}")
+            else:
+                messagebox.showinfo("No Encontrado", "El libro no existe en la lista.")
+        else:
+            messagebox.showwarning("Advertencia", "Por favor, introduzca el título para buscar.")
 
-    def search_book(self, title):
-        current = self.head
-        while current:
-            if current.book.title == title:
-                return current.book
-            current = current.next
-        return None
-
-    def delete_book(self, title):
-        current = self.head
-        while current:
-            if current.book.title == title:
-                if current.prev:
-                    current.prev.next = current.next
-                if current.next:
-                    current.next.prev = current.prev
-                if current == self.head:
-                    self.head = current.next
-                return True
-            current = current.next
-        return False
+    def delete_book(self):
+        title = self.title_entry.get()
+        if title:
+            success = self.list.delete_book(title)
+            if success:
+                messagebox.showinfo("Éxito", f"Libro '{title}' eliminado.")
+            else:
+                messagebox.showinfo("No Encontrado", "El libro no existe en la lista.")
+        else:
+            messagebox.showwarning("Advertencia", "Por favor, introduzca el título para eliminar.")
 
     def show_books(self):
-        current = self.head
-        books = []
-        while current:
-            books.append(f"{current.book.title} by {current.book.author} ({current.book.year})")
-            current = current.next
-        return books
-
-class CircularNode:
-    def __init__(self, book):
-        self.book = book
-        self.next = None
-
-class CircularList:
-    def __init__(self):
-        self.head = None
-
-    def add_book(self, book):
-        new_node = CircularNode(book)
-        if not self.head:
-            self.head = new_node
-            new_node.next = self.head
+        books = self.list.show_books()
+        if books:
+            messagebox.showinfo("Lista de Libros", "\n".join(books))
         else:
-            current = self.head
-            while current.next != self.head:
-                current = current.next
-            current.next = new_node
-            new_node.next = self.head
+            messagebox.showinfo("Lista Vacía", "No hay libros en la lista.")
 
-    def search_book(self, title):
-        if not self.head:
-            return None
-        current = self.head
-        while True:
-            if current.book.title == title:
-                return current.book
-            current = current.next
-            if current == self.head:
-                break
-        return None
+# Ejecución de la aplicación
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = BookManagerApp(root)
+    root.mainloop()
